@@ -1,0 +1,33 @@
+FROM nginx:1.27.5-alpine
+
+RUN apk add --no-cache bash
+
+# Создаем не-root пользователя и группу
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
+COPY nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
+COPY nginx/cert/localhost/self-signed.crt /etc/nginx/cert/localhost/self-signed.crt
+COPY nginx/cert/localhost/self-signed.key /etc/nginx/cert/localhost/self-signed.key
+
+COPY ./web /usr/share/nginx/html
+
+# Изменяем владельца файлов и директорий
+RUN chown -R appuser:appgroup /usr/share/nginx/html \
+    && chown -R appuser:appgroup /etc/nginx \
+    && chown -R appuser:appgroup /var/cache/nginx \
+    && chown -R appuser:appgroup /var/log/nginx \
+    && touch /var/run/nginx.pid \
+    && chown appuser:appgroup /var/run/nginx.pid \
+    # Устанавливаем права для директорий в cert
+    && find /etc/nginx/cert -type d -exec chmod 755 {} \; \
+    # Устанавливаем права для сертификатов (*.crt) - чтение для всех
+    && find /etc/nginx/cert -type f -name "*.crt" -exec chmod 644 {} \; \
+    # Устанавливаем права для приватных ключей (*.key) - чтение только для владельца
+    && find /etc/nginx/cert -type f -name "*.key" -exec chmod 600 {} \;
+
+USER appuser
+
+EXPOSE 80 443
+
+CMD ["nginx", "-g", "daemon off;"]

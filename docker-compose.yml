@@ -1,0 +1,13 @@
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/dockerfile
+    container_name: nginx-proxy
+    ports:
+      - "80:8080"
+      - "443:443"
+    volumes:
+      - ./web:/usr/share/nginx/html:ro
+    restart: unless-stopped
+ 
