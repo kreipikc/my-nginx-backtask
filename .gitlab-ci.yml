@@ -1,0 +1,24 @@
+stages:
+  - build
+  - test
+  - deploy
+
+build:
+  stage: build
+  tags: [mywindows-runner]
+  script:
+    - docker-compose build
+
+test:
+  stage: test
+  tags: [mywindows-runner]
+  script:
+    - echo "Running tests"
+
+deploy:
+  stage: deploy
+  tags: [mywindows-runner]
+  script:
+    - docker-compose up -d
+  only:
+    - main
